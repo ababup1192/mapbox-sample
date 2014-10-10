@@ -1,4 +1,4 @@
-var Marker;
+var Marker, latlngToAddress, writeAddress;
 
 $(function() {
   var latlng, map, marker;
@@ -12,6 +12,23 @@ $(function() {
   return marker.addMap();
 });
 
+latlngToAddress = function(latlng) {
+  return $.ajax({
+    type: 'GET',
+    url: 'https://maps.googleapis.com/maps/api/geocode/json?latlng=' + latlng.lat + ',' + latlng.lng,
+    dataType: 'json',
+    scriptCharset: 'utf-8'
+  });
+};
+
+writeAddress = function(latlng) {
+  return $.when(latlngToAddress(latlng)).then(function(json) {
+    var address;
+    address = json.results[0].formatted_address;
+    return $('#address').val(address);
+  });
+};
+
 Marker = (function() {
   function Marker(latlng, message, map) {
     this.latlng = latlng;
@@ -24,9 +41,11 @@ Marker = (function() {
       draggable: true
     });
     this.marker.bindPopup(' Laglng(' + latlng.lat + ', ' + latlng.lng + ')');
+    writeAddress(latlng);
     this.marker.on('dragend', function(e) {
       latlng = e.target._latlng;
-      return e.target.bindPopup(String(latlng));
+      e.target.bindPopup(String(latlng));
+      return writeAddress(latlng);
     });
   }
 
