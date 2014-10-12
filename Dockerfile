@@ -16,6 +16,7 @@ RUN npm install coffee-script
 RUN npm install gulp-jade
 RUN npm install gulp-coffee
 RUN npm install gulp-sass
+RUN npm install gulp-webpack
 
 ADD gulpfile.js /data/gulpfile.js
 ADD gulpfile.coffee /data/gulpfile.coffee

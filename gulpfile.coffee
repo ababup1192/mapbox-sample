@@ -8,6 +8,7 @@ jade = require 'gulp-jade'
 coffee = require 'gulp-coffee'
 sass = require 'gulp-sass'
 connect = require 'gulp-connect'
+webpack = require 'gulp-webpack'
 
 # Tasks
 
@@ -41,6 +42,13 @@ gulp.task 'coffee', ->
     .pipe(plumber())
     .pipe(coffee(bare: true))
     .pipe(gulp.dest('./dist/js/'))
+
+gulp.task 'webpack', ['coffee'], ->
+  gulp.src('./dist/js/entry.js')
+    .pipe webpack
+      output:
+        filename: 'bundle.js'
+    .pipe(gulp.dest('./dist/js/'))
     .pipe(connect.reload())
 
 gulp.task 'sass', ->
@@ -53,11 +61,11 @@ gulp.task 'sass', ->
 gulp.task 'watch', ->
   gulp.watch(
     ['./jade/**/*.jade', './coffee/**/*.coffee', './sass/**/*.scss'],
-    ['jade', 'coffee', 'sass']
+    ['jade', 'webpack', 'sass']
   )
 
 gulp.task 'info', ->
   console.log "Please connect http://dockerhost:8080"
 
-gulp.task 'default', ['jade', 'coffee', 'sass', 'connect', 'watch', 'info']
+gulp.task 'default', ['jade', 'webpack', 'sass', 'connect', 'watch', 'info']
 
