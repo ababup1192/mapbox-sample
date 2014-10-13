@@ -11,13 +11,18 @@ window.Marker = (function() {
     this.marker.on('dragend', function(e) {
       latlng = LatLng.toLatLng(e.target._latlng);
       e.target.bindPopup(latlng.toString());
-      return Map.writeAddress(latlng);
+      return Stage.writeAddress(latlng);
     });
-    Map.writeAddress(latlng);
+    Stage.writeAddress(latlng);
   }
 
   Marker.prototype.addMap = function(map) {
     return this.marker.addTo(map);
+  };
+
+  Marker.prototype.moveMarker = function(latlng) {
+    this.marker.setLatLng(latlng.toMapboxLatLng());
+    return this.marker.update();
   };
 
   return Marker;

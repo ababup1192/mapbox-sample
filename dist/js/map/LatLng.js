@@ -16,8 +16,9 @@ window.LatLng = (function() {
     return new L.LatLng(this.lat, this.lng);
   };
 
-  LatLng.prototype.getAddress = function() {
-    return $.ajax({
+  LatLng.prototype.getAddress$ = function() {
+    var ajax;
+    return ajax = $.ajax({
       type: 'GET',
       url: "https://maps.googleapis.com/maps/api/geocode/json?latlng=" + this.lat + "," + this.lng,
       dataType: 'json',

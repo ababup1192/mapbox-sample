@@ -52,9 +52,84 @@
 
 	__webpack_require__(4);
 
+	__webpack_require__(5);
+
+	__webpack_require__(6);
+
 
 /***/ },
 /* 1 */
+/***/ function(module, exports, __webpack_require__) {
+
+	window.Stage = (function() {
+	  function Stage(map) {
+	    this.map = map;
+	    this.setGetAddressEvent();
+	  }
+
+	  Stage.writeAddress = function(latlng) {
+	    return $.when(latlng.getAddress$()).then(function(json) {
+	      var address;
+	      address = json.results[0].formatted_address;
+	      return $('#address').val(address);
+	    });
+	  };
+
+	  Stage.prototype.setGetAddressEvent = function() {
+	    var getLocation, keyPressEvent;
+	    getLocation = function(map) {
+	      return function(json) {
+	        var latlng;
+	        latlng = LatLng.toLatLng(json.results[0].geometry.location);
+	        map.setView(latlng);
+	        return map.moveMarker(latlng);
+	      };
+	    };
+	    keyPressEvent = function(map) {
+	      return function(e) {
+	        var address, addressText;
+	        if (e.keyCode === 13) {
+	          addressText = $('#address').val();
+	          address = new Address(addressText);
+	          $.when(address.toLatLng$()).then(getLocation(map));
+	          return false;
+	        }
+	      };
+	    };
+	    return $('#address').keypress(keyPressEvent(this.map));
+	  };
+
+	  return Stage;
+
+	})();
+
+
+/***/ },
+/* 2 */
+/***/ function(module, exports, __webpack_require__) {
+
+	window.Address = (function() {
+	  function Address(address) {
+	    this.address = address;
+	  }
+
+	  Address.prototype.toLatLng$ = function() {
+	    var ajax;
+	    return ajax = $.ajax({
+	      type: 'GET',
+	      url: "https://maps.googleapis.com/maps/api/geocode/json?address=" + this.address,
+	      dataType: 'json',
+	      scriptCharset: 'utf-8'
+	    });
+	  };
+
+	  return Address;
+
+	})();
+
+
+/***/ },
+/* 3 */
 /***/ function(module, exports, __webpack_require__) {
 
 	window.LatLng = (function() {
@@ -75,8 +150,9 @@
 	    return new L.LatLng(this.lat, this.lng);
 	  };
 
-	  LatLng.prototype.getAddress = function() {
-	    return $.ajax({
+	  LatLng.prototype.getAddress$ = function() {
+	    var ajax;
+	    return ajax = $.ajax({
 	      type: 'GET',
 	      url: "https://maps.googleapis.com/maps/api/geocode/json?latlng=" + this.lat + "," + this.lng,
 	      dataType: 'json',
@@ -90,7 +166,7 @@
 
 
 /***/ },
-/* 2 */
+/* 4 */
 /***/ function(module, exports, __webpack_require__) {
 
 	window.Marker = (function() {
@@ -106,13 +182,18 @@
 	    this.marker.on('dragend', function(e) {
 	      latlng = LatLng.toLatLng(e.target._latlng);
 	      e.target.bindPopup(latlng.toString());
-	      return Map.writeAddress(latlng);
+	      return Stage.writeAddress(latlng);
 	    });
-	    Map.writeAddress(latlng);
+	    Stage.writeAddress(latlng);
 	  }
 
 	  Marker.prototype.addMap = function(map) {
 	    return this.marker.addTo(map);
+	  };
+
+	  Marker.prototype.moveMarker = function(latlng) {
+	    this.marker.setLatLng(latlng.toMapboxLatLng());
+	    return this.marker.update();
 	  };
 
 	  return Marker;
@@ -121,7 +202,7 @@
 
 
 /***/ },
-/* 3 */
+/* 5 */
 /***/ function(module, exports, __webpack_require__) {
 
 	window.Map = (function() {
@@ -129,8 +210,8 @@
 	    this.divId = divId;
 	    this.mapId = mapId;
 	    this.map = L.mapbox.map('map', 'examples.map-i86nkdio');
-	    this.map.setView([initLatlng.lat, initLatlng.lng], 16);
-	    Map.getAddress();
+	    this.setView(initLatlng);
+	    new Stage(this);
 	  }
 
 	  Map.prototype.addMarker = function(marker) {
@@ -138,21 +219,12 @@
 	    return this.marker.addMap(this.map);
 	  };
 
-	  Map.writeAddress = function(latlng) {
-	    return $.when(latlng.getAddress()).then(function(json) {
-	      var address;
-	      address = json.results[0].formatted_address;
-	      return $('#address').val(address);
-	    });
+	  Map.prototype.moveMarker = function(latlng) {
+	    return this.marker.moveMarker(latlng);
 	  };
 
-	  Map.getAddress = function() {
-	    return $('#address').keypress(function(e) {
-	      if (e.keyCode === 13) {
-	        console.log($('#address').val());
-	        return false;
-	      }
-	    });
+	  Map.prototype.setView = function(latlng) {
+	    return this.map.setView([latlng.lat, latlng.lng], 16);
 	  };
 
 	  return Map;
@@ -161,7 +233,7 @@
 
 
 /***/ },
-/* 4 */
+/* 6 */
 /***/ function(module, exports, __webpack_require__) {
 
 	$(function() {

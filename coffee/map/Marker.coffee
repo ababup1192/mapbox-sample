@@ -11,8 +11,12 @@ class window.Marker
 		@marker.on 'dragend', (e) ->
 			latlng = LatLng.toLatLng(e.target._latlng)
 			e.target.bindPopup latlng.toString()
-			Map.writeAddress(latlng)
+			Stage.writeAddress(latlng)
 		# write address to input form
-		Map.writeAddress(latlng)
+		Stage.writeAddress(latlng)
 	addMap: (map) ->
 		@marker.addTo(map)
+
+	moveMarker: (latlng) ->
+		@marker.setLatLng(latlng.toMapboxLatLng())
+		@marker.update()

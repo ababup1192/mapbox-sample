@@ -10,8 +10,8 @@ class window.LatLng
 	toMapboxLatLng: () ->
 		new L.LatLng(@lat, @lng)
 
-	getAddress: () ->
-		$.ajax
+	getAddress$: () ->
+		ajax = $.ajax
 			type: 'GET'
 			url: "https://maps.googleapis.com/maps/api/geocode/json?latlng=#{@lat},#{@lng}"
 			dataType: 'json'
