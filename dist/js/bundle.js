@@ -56,6 +56,10 @@
 
 	__webpack_require__(6);
 
+	__webpack_require__(7);
+
+	__webpack_require__(8);
+
 
 /***/ },
 /* 1 */
@@ -65,6 +69,7 @@
 	  function Stage(map) {
 	    this.map = map;
 	    this.setGetAddressEvent();
+	    this.setCheckPoint();
 	  }
 
 	  Stage.writeAddress = function(latlng) {
@@ -97,6 +102,25 @@
 	      };
 	    };
 	    return $('#address').keypress(keyPressEvent(this.map));
+	  };
+
+	  Stage.prototype.setCheckPoint = function() {
+	    var checkEvent;
+	    checkEvent = function(map) {
+	      var circleMarker;
+	      circleMarker = map.getCircleMarker();
+	      return function() {
+	        var currentLatLng;
+	        if ($(this).is(':checked')) {
+	          currentLatLng = map.getMarker().getLatLng();
+	          circleMarker = new CircleMarker(currentLatLng);
+	          return map.addCircleMarker(circleMarker);
+	        } else {
+	          return console.log('disable');
+	        }
+	      };
+	    };
+	    return $('#checkpoint').change(checkEvent(this.map));
 	  };
 
 	  return Stage;
@@ -172,27 +196,24 @@
 	window.Marker = (function() {
 	  function Marker(latlng) {
 	    this.latlng = latlng;
-	    this.marker = L.marker(this.latlng.toMapboxLatLng(), {
-	      icon: L.mapbox.marker.icon({
-	        'marker-color': 'ff8856'
-	      }),
-	      draggable: true
-	    });
-	    this.marker.bindPopup(latlng.toString());
-	    this.marker.on('dragend', function(e) {
-	      latlng = LatLng.toLatLng(e.target._latlng);
-	      e.target.bindPopup(latlng.toString());
-	      return Stage.writeAddress(latlng);
-	    });
-	    Stage.writeAddress(latlng);
+	    this.marker = null;
 	  }
 
 	  Marker.prototype.addMap = function(map) {
 	    return this.marker.addTo(map);
 	  };
 
+	  Marker.prototype.updateLatLng = function(latlng) {
+	    return this.latlng = latlng;
+	  };
+
+	  Marker.prototype.getLatLng = function() {
+	    return this.latlng;
+	  };
+
 	  Marker.prototype.moveMarker = function(latlng) {
 	    this.marker.setLatLng(latlng.toMapboxLatLng());
+	    this.updateLatLng(latlng);
 	    return this.marker.update();
 	  };
 
@@ -205,13 +226,76 @@
 /* 5 */
 /***/ function(module, exports, __webpack_require__) {
 
+	var __hasProp = {}.hasOwnProperty,
+	  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+
+	window.DraggableMarker = (function(_super) {
+	  __extends(DraggableMarker, _super);
+
+	  function DraggableMarker(latlng) {
+	    var dragendEvent;
+	    this.latlng = latlng;
+	    this.marker = L.marker(this.latlng.toMapboxLatLng(), {
+	      icon: L.mapbox.marker.icon({
+	        'marker-color': 'ff8856'
+	      }),
+	      draggable: true
+	    });
+	    this.marker.bindPopup(latlng.toString());
+	    dragendEvent = function(marker) {
+	      return function(e) {
+	        latlng = LatLng.toLatLng(e.target._latlng);
+	        marker.updateLatLng(latlng);
+	        e.target.bindPopup(latlng.toString());
+	        return Stage.writeAddress(latlng);
+	      };
+	    };
+	    this.marker.on('dragend', dragendEvent(this));
+	    Stage.writeAddress(latlng);
+	  }
+
+	  return DraggableMarker;
+
+	})(Marker);
+
+
+/***/ },
+/* 6 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var __hasProp = {}.hasOwnProperty,
+	  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+
+	window.CircleMarker = (function(_super) {
+	  __extends(CircleMarker, _super);
+
+	  function CircleMarker(latlng) {
+	    this.latlng = latlng;
+	    this.marker = L.circleMarker(this.latlng.toMapboxLatLng(), {
+	      icon: L.mapbox.marker.icon({
+	        'marker-color': 'ff8856'
+	      })
+	    });
+	  }
+
+	  return CircleMarker;
+
+	})(Marker);
+
+
+/***/ },
+/* 7 */
+/***/ function(module, exports, __webpack_require__) {
+
 	window.Map = (function() {
 	  function Map(divId, mapId, initLatlng) {
 	    this.divId = divId;
 	    this.mapId = mapId;
 	    this.map = L.mapbox.map('map', 'examples.map-i86nkdio');
 	    this.setView(initLatlng);
-	    new Stage(this);
+	    this.latlng = initLatlng;
+	    this.marker = null;
+	    this.circleMarker = null;
 	  }
 
 	  Map.prototype.addMarker = function(marker) {
@@ -219,7 +303,25 @@
 	    return this.marker.addMap(this.map);
 	  };
 
+	  Map.prototype.addCircleMarker = function(circleMarker) {
+	    this.circleMarker = circleMarker;
+	    return this.circleMarker.addMap(this.map);
+	  };
+
+	  Map.prototype.getLatLng = function() {
+	    return this.latlng;
+	  };
+
+	  Map.prototype.getMarker = function() {
+	    return this.marker;
+	  };
+
+	  Map.prototype.getCircleMarker = function() {
+	    return this.circleMarker;
+	  };
+
 	  Map.prototype.moveMarker = function(latlng) {
+	    this.latlng = latlng;
 	    return this.marker.moveMarker(latlng);
 	  };
 
@@ -233,7 +335,7 @@
 
 
 /***/ },
-/* 6 */
+/* 8 */
 /***/ function(module, exports, __webpack_require__) {
 
 	$(function() {
@@ -241,7 +343,8 @@
 	  latlng = new LatLng(35.681382, 139.766084);
 	  L.mapbox.accessToken = 'pk.eyJ1IjoiYWJhYnVwMTE5MiIsImEiOiJhb2JBNW5BIn0.IID695V8Pc8STRTeGaiMbg';
 	  map = new Map('map', 'examples.map-i86nkdio', latlng);
-	  return map.addMarker(new Marker(latlng));
+	  map.addMarker(new DraggableMarker(latlng));
+	  return new Stage(map);
 	});
 
 

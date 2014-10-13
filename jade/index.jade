@@ -3,8 +3,8 @@ html(lang="ja")
 	head
 		meta(charset='UTF-8' name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no')
 		title Mapbox sample
-		script(src='https://api.tiles.mapbox.com/mapbox.js/v2.1.2/mapbox.js', charset='UTF-8')
 		script(src='lib/js/jquery.min.js', charset='UTF-8')
+		script(src='https://api.tiles.mapbox.com/mapbox.js/v2.1.2/mapbox.js', charset='UTF-8')
 		script(src='js/bundle.js', charset='UTF-8')
 		link(href='https://api.tiles.mapbox.com/mapbox.js/v2.1.2/mapbox.css', rel='stylesheet')
 		link(href='css/map.css', rel='stylesheet')
@@ -13,8 +13,9 @@ html(lang="ja")
 			header
 				h1 Map
 			#mapStatus
-				h2#name えびの場所
 				input#address(type="text")
+				p チェックポイント
+				input#checkpoint(type="checkbox")
 			#inner
 				#mainWrap
 					#map

@@ -12,15 +12,27 @@ webpack = require 'gulp-webpack'
 
 # Tasks
 
-gulp.task 'bower', ->
+gulp.task 'bower', ['bower-js', 'bower-map', 'bower-css'], ->
+
+gulp.task 'bower-js', ->
   jsFilter = filter('**/*.js')
-  cssFilter = filter('**/*.css')
-  # import js libraries
   gulp.src(bowerFiles())
     .pipe(jsFilter)
+    # import js libraries
     .pipe(gulp.dest('./dist/lib/js'))
-    # import css libraries
+
+gulp.task 'bower-map', ->
+  mapFilter = filter('**/*.map')
+  gulp.src(bowerFiles())
+    .pipe(mapFilter)
+    # import js libraries
+    .pipe(gulp.dest('./dist/lib/js'))
+
+gulp.task 'bower-css', ->
+  cssFilter = filter('**/*.css')
+  gulp.src(bowerFiles())
     .pipe(cssFilter)
+    # import js libraries
     .pipe(gulp.dest('./dist/lib/css'))
 
 # local server

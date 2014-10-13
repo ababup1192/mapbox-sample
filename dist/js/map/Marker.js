@@ -1,27 +1,24 @@
 window.Marker = (function() {
   function Marker(latlng) {
     this.latlng = latlng;
-    this.marker = L.marker(this.latlng.toMapboxLatLng(), {
-      icon: L.mapbox.marker.icon({
-        'marker-color': 'ff8856'
-      }),
-      draggable: true
-    });
-    this.marker.bindPopup(latlng.toString());
-    this.marker.on('dragend', function(e) {
-      latlng = LatLng.toLatLng(e.target._latlng);
-      e.target.bindPopup(latlng.toString());
-      return Stage.writeAddress(latlng);
-    });
-    Stage.writeAddress(latlng);
+    this.marker = null;
   }
 
   Marker.prototype.addMap = function(map) {
     return this.marker.addTo(map);
   };
 
+  Marker.prototype.updateLatLng = function(latlng) {
+    return this.latlng = latlng;
+  };
+
+  Marker.prototype.getLatLng = function() {
+    return this.latlng;
+  };
+
   Marker.prototype.moveMarker = function(latlng) {
     this.marker.setLatLng(latlng.toMapboxLatLng());
+    this.updateLatLng(latlng);
     return this.marker.update();
   };
 

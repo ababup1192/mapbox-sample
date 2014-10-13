@@ -2,6 +2,7 @@ window.Stage = (function() {
   function Stage(map) {
     this.map = map;
     this.setGetAddressEvent();
+    this.setCheckPoint();
   }
 
   Stage.writeAddress = function(latlng) {
@@ -34,6 +35,25 @@ window.Stage = (function() {
       };
     };
     return $('#address').keypress(keyPressEvent(this.map));
+  };
+
+  Stage.prototype.setCheckPoint = function() {
+    var checkEvent;
+    checkEvent = function(map) {
+      var circleMarker;
+      circleMarker = map.getCircleMarker();
+      return function() {
+        var currentLatLng;
+        if ($(this).is(':checked')) {
+          currentLatLng = map.getMarker().getLatLng();
+          circleMarker = new CircleMarker(currentLatLng);
+          return map.addCircleMarker(circleMarker);
+        } else {
+          return console.log('disable');
+        }
+      };
+    };
+    return $('#checkpoint').change(checkEvent(this.map));
   };
 
   return Stage;

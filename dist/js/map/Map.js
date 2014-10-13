@@ -4,7 +4,9 @@ window.Map = (function() {
     this.mapId = mapId;
     this.map = L.mapbox.map('map', 'examples.map-i86nkdio');
     this.setView(initLatlng);
-    new Stage(this);
+    this.latlng = initLatlng;
+    this.marker = null;
+    this.circleMarker = null;
   }
 
   Map.prototype.addMarker = function(marker) {
@@ -12,7 +14,25 @@ window.Map = (function() {
     return this.marker.addMap(this.map);
   };
 
+  Map.prototype.addCircleMarker = function(circleMarker) {
+    this.circleMarker = circleMarker;
+    return this.circleMarker.addMap(this.map);
+  };
+
+  Map.prototype.getLatLng = function() {
+    return this.latlng;
+  };
+
+  Map.prototype.getMarker = function() {
+    return this.marker;
+  };
+
+  Map.prototype.getCircleMarker = function() {
+    return this.circleMarker;
+  };
+
   Map.prototype.moveMarker = function(latlng) {
+    this.latlng = latlng;
     return this.marker.moveMarker(latlng);
   };
 

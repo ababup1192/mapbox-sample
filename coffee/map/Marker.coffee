@@ -1,22 +1,17 @@
 class window.Marker
 	constructor: (@latlng) ->
-		# make marker
-		@marker = L.marker @latlng.toMapboxLatLng(),
-			 	icon: L.mapbox.marker.icon
-			 		'marker-color': 'ff8856'
-			 	draggable: true
-		# set popup
-		@marker.bindPopup latlng.toString()
-		# set dragend event
-		@marker.on 'dragend', (e) ->
-			latlng = LatLng.toLatLng(e.target._latlng)
-			e.target.bindPopup latlng.toString()
-			Stage.writeAddress(latlng)
-		# write address to input form
-		Stage.writeAddress(latlng)
+		@marker = null
+
 	addMap: (map) ->
 		@marker.addTo(map)
 
+	updateLatLng: (latlng) ->
+		@latlng = latlng
+
+	getLatLng: () ->
+		@latlng
+
 	moveMarker: (latlng) ->
 		@marker.setLatLng(latlng.toMapboxLatLng())
+		@updateLatLng(latlng)
 		@marker.update()

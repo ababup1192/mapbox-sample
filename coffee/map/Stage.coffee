@@ -1,6 +1,7 @@
 class window.Stage
 	constructor: (@map) ->
 		@setGetAddressEvent()
+		@setCheckPoint()
 
 	@writeAddress: (latlng) ->
 		$.when latlng.getAddress$()
@@ -23,5 +24,18 @@ class window.Stage
 						.then getLocation(map)
 					false
 		$('#address').keypress keyPressEvent(@map)
+
+	setCheckPoint: () ->
+		checkEvent = (map) ->
+			circleMarker = map.getCircleMarker()
+			() ->
+				if $(this).is ':checked'
+					currentLatLng = map.getMarker().getLatLng()
+					circleMarker = new CircleMarker(currentLatLng)
+					map.addCircleMarker(circleMarker)
+				else
+					console.log 'disable'
+
+		$('#checkpoint').change checkEvent(@map)
 
 
