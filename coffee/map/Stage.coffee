@@ -1,41 +1,90 @@
 class window.Stage
-	constructor: (@map) ->
-		@setGetAddressEvent()
-		@setCheckPoint()
+	constructor: (@map, initLatLng) ->
+		@marker = null
+		@circleMarker = null
+		@currentLatLng = initLatLng
+		@setGettingAddressEvent()
+		@setCheckPointEvent()
 
-	@writeAddress: (latlng) ->
+		circlePoint = (feature, latlng) ->
+			L.circleMarker latlng,
+				radius: 50
+
+		@layer = @map.addPointToLayer(circlePoint)
+
+		geoJson = [
+			"type": "Feature"
+			properties: {}
+			geometry:
+				"type":"Point"
+				coordinates:[initLatLng.lng, initLatLng.lat, 6]
+		]
+
+		@layer.addData(geoJson)
+		#@layer.clearLayers()
+
+	getCircleMarker: () ->
+		@circleMarker
+
+	addMarker: (marker) ->
+		@marker = marker
+		@map.addMarker(marker)
+
+	addCircleMarker: () ->
+		@circleMarker = new CircleMarker(@currentLatLng)
+		@map.addMarker(@circleMarker)
+
+	removeCircleMarker: () ->
+
+	setLatLng: (latlng) ->
+		@currentLatLng = latlng
+		@map.moveMarker(@marker, @currentLatLng)
+		if @circleMarker isnt null
+			@map.moveMarker(@circleMarker, @currentLatLng)
+		@map.setView(@currentLatLng)
+
+	getLatLng: () ->
+		@currentLatLng
+
+	getAddress: () ->
+		$('#address').val()
+
+	displayAddress: (address) ->
+		$('#address').val(address)
+
+	setAddress: (latlng) ->
 		$.when latlng.getAddress$()
 		.then (json) ->
 			address = json.results[0].formatted_address
-			$('#address').val(address)
+			window.stage.displayAddress(address)
 
-	setGetAddressEvent: () ->
-		getLocation = (map) ->
-			(json) ->
+	setKeyPressEvent: (e) ->
+		$('#address').keypress e
+
+	setGettingAddressEvent: () ->
+		changeLocation = (json) ->
 				latlng = LatLng.toLatLng(json.results[0].geometry.location)
-				map.setView(latlng)
-				map.moveMarker(latlng)
-		keyPressEvent = (map) ->
-			(e) ->
+				window.stage.setLatLng(latlng)
+		keyPressEvent = (e) ->
 				if e.keyCode == 13
-					addressText = $('#address').val()
+					addressText = window.stage.getAddress()
 					address = new Address(addressText)
 					$.when address.toLatLng$()
-						.then getLocation(map)
+						.then changeLocation
 					false
-		$('#address').keypress keyPressEvent(@map)
+		@setKeyPressEvent keyPressEvent
 
-	setCheckPoint: () ->
-		checkEvent = (map) ->
-			circleMarker = map.getCircleMarker()
-			() ->
+	setCheckEvent: (e) ->
+		$('#checkpoint').change e
+
+	setCheckPointEvent: () ->
+		checkEvent = () ->
 				if $(this).is ':checked'
-					currentLatLng = map.getMarker().getLatLng()
-					circleMarker = new CircleMarker(currentLatLng)
-					map.addCircleMarker(circleMarker)
+					if window.stage.getCircleMarker isnt null
+						window.stage.addCircleMarker()
 				else
-					console.log 'disable'
+					window.stage.removeCircleMarker()
 
-		$('#checkpoint').change checkEvent(@map)
+		@setCheckEvent checkEvent
 
 

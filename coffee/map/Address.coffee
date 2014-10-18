@@ -7,3 +7,4 @@ class window.Address
 			url: "https://maps.googleapis.com/maps/api/geocode/json?address=#{@address}"
 			dataType: 'json'
 			scriptCharset: 'utf-8'
+

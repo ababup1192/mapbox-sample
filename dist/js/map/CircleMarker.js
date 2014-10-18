@@ -5,8 +5,7 @@ window.CircleMarker = (function(_super) {
   __extends(CircleMarker, _super);
 
   function CircleMarker(latlng) {
-    this.latlng = latlng;
-    this.marker = L.circleMarker(this.latlng.toMapboxLatLng(), {
+    this.marker = L.circleMarker(latlng.toMapboxLatLng(), {
       icon: L.mapbox.marker.icon({
         'marker-color': 'ff8856'
       })

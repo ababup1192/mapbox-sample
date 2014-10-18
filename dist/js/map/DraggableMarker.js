@@ -5,25 +5,20 @@ window.DraggableMarker = (function(_super) {
   __extends(DraggableMarker, _super);
 
   function DraggableMarker(latlng) {
-    var dragendEvent;
-    this.latlng = latlng;
-    this.marker = L.marker(this.latlng.toMapboxLatLng(), {
+    this.marker = L.marker(latlng.toMapboxLatLng(), {
       icon: L.mapbox.marker.icon({
         'marker-color': 'ff8856'
       }),
       draggable: true
     });
     this.marker.bindPopup(latlng.toString());
-    dragendEvent = function(marker) {
-      return function(e) {
-        latlng = LatLng.toLatLng(e.target._latlng);
-        marker.updateLatLng(latlng);
-        e.target.bindPopup(latlng.toString());
-        return Stage.writeAddress(latlng);
-      };
-    };
-    this.marker.on('dragend', dragendEvent(this));
-    Stage.writeAddress(latlng);
+    window.stage.setAddress(latlng);
+    this.marker.on('dragend', function(e) {
+      latlng = LatLng.toLatLng(e.target._latlng);
+      window.stage.setAddress(latlng);
+      window.stage.setLatLng(latlng);
+      return e.target.bindPopup(latlng.toString());
+    });
   }
 
   return DraggableMarker;

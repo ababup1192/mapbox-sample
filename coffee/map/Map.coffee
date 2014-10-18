@@ -1,32 +1,20 @@
 class window.Map
 	constructor: (@divId, @mapId, initLatlng) ->
-		@map = L.mapbox.map('map', 'examples.map-i86nkdio')
+		@map = L.mapbox.map(@divId, @mapId)
 		@setView(initLatlng)
-		@latlng = initLatlng
-		@marker = null
-		@circleMarker = null
 
-	addMarker: (@marker) ->
-		@marker.addMap(@map)
+	addMarker: (marker) ->
+		marker.addMap(@map)
 
-	addCircleMarker: (@circleMarker) ->
-		@circleMarker.addMap(@map)
+	addPointToLayer: (point) ->
+		L.geoJson(null, {pointToLayer: point}).addTo(@map)
 
-	getLatLng: () ->
-		@latlng
-
-	getMarker: () ->
-		@marker
-
-	getCircleMarker: () ->
-		@circleMarker
-
-	moveMarker: (latlng) ->
-		@latlng = latlng
-		@marker.moveMarker(latlng)
-		# @circleMarker.moveMarker(latlng)
+	moveMarker: (marker, latlng) ->
+		marker.moveMarker(latlng)
 
 	setView: (latlng) ->
 		@map.setView([latlng.lat, latlng.lng], 16)
 
 
+	setGeoJson: (geoJson) ->
+		@map.featureLayer.setGeoJSON(geoJson)
