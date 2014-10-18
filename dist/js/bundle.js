@@ -67,30 +67,12 @@
 
 	window.Stage = (function() {
 	  function Stage(map, initLatLng) {
-	    var circlePoint, geoJson;
 	    this.map = map;
 	    this.marker = null;
 	    this.circleMarker = null;
 	    this.currentLatLng = initLatLng;
 	    this.setGettingAddressEvent();
 	    this.setCheckPointEvent();
-	    circlePoint = function(feature, latlng) {
-	      return L.circleMarker(latlng, {
-	        radius: 50
-	      });
-	    };
-	    this.layer = this.map.addPointToLayer(circlePoint);
-	    geoJson = [
-	      {
-	        "type": "Feature",
-	        properties: {},
-	        geometry: {
-	          "type": "Point",
-	          coordinates: [initLatLng.lng, initLatLng.lat, 6]
-	        }
-	      }
-	    ];
-	    this.layer.addData(geoJson);
 	  }
 
 	  Stage.prototype.getCircleMarker = function() {
@@ -103,11 +85,29 @@
 	  };
 
 	  Stage.prototype.addCircleMarker = function() {
-	    this.circleMarker = new CircleMarker(this.currentLatLng);
-	    return this.map.addMarker(this.circleMarker);
+	    var circlePoint, geoJson;
+	    circlePoint = function(feature, latlng) {
+	      return L.circleMarker(latlng, {
+	        radius: 50
+	      });
+	    };
+	    this.layer = this.map.addPointToLayer(circlePoint);
+	    geoJson = [
+	      {
+	        "type": "Feature",
+	        properties: {},
+	        geometry: {
+	          "type": "Point",
+	          coordinates: [this.currentLatLng.lng, this.currentLatLng.lat, 6]
+	        }
+	      }
+	    ];
+	    return this.layer.addData(geoJson);
 	  };
 
-	  Stage.prototype.removeCircleMarker = function() {};
+	  Stage.prototype.removeCircleMarker = function() {
+	    return this.layer.clearLayers();
+	  };
 
 	  Stage.prototype.setLatLng = function(latlng) {
 	    this.currentLatLng = latlng;

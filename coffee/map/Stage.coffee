@@ -6,6 +6,14 @@ class window.Stage
 		@setGettingAddressEvent()
 		@setCheckPointEvent()
 
+	getCircleMarker: () ->
+		@circleMarker
+
+	addMarker: (marker) ->
+		@marker = marker
+		@map.addMarker(marker)
+
+	addCircleMarker: () ->
 		circlePoint = (feature, latlng) ->
 			L.circleMarker latlng,
 				radius: 50
@@ -17,24 +25,13 @@ class window.Stage
 			properties: {}
 			geometry:
 				"type":"Point"
-				coordinates:[initLatLng.lng, initLatLng.lat, 6]
+				coordinates:[@currentLatLng.lng, @currentLatLng.lat, 6]
 		]
 
 		@layer.addData(geoJson)
-		#@layer.clearLayers()
-
-	getCircleMarker: () ->
-		@circleMarker
-
-	addMarker: (marker) ->
-		@marker = marker
-		@map.addMarker(marker)
-
-	addCircleMarker: () ->
-		@circleMarker = new CircleMarker(@currentLatLng)
-		@map.addMarker(@circleMarker)
 
 	removeCircleMarker: () ->
+		@layer.clearLayers()
 
 	setLatLng: (latlng) ->
 		@currentLatLng = latlng
