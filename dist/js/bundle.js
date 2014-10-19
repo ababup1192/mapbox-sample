@@ -58,68 +58,84 @@
 
 	__webpack_require__(7);
 
-	__webpack_require__(8);
-
 
 /***/ },
 /* 1 */
 /***/ function(module, exports, __webpack_require__) {
 
 	window.Stage = (function() {
-	  function Stage(map, initLatLng) {
-	    this.map = map;
+	  function Stage(initLatLng) {
+	    this.map = null;
 	    this.marker = null;
-	    this.circleMarker = null;
 	    this.currentLatLng = initLatLng;
+	    this.layer = null;
+	    this.checkPointNum = 0;
 	    this.setGettingAddressEvent();
 	    this.setCheckPointEvent();
 	  }
 
-	  Stage.prototype.getCircleMarker = function() {
-	    return this.circleMarker;
+	  Stage.prototype.getLatLng = function() {
+	    return this.currentLatLng;
 	  };
 
-	  Stage.prototype.addMarker = function(marker) {
-	    this.marker = marker;
-	    return this.map.addMarker(marker);
+	  Stage.prototype.getMap = function() {
+	    return this.map;
 	  };
 
-	  Stage.prototype.addCircleMarker = function() {
-	    var circlePoint, geoJson;
-	    circlePoint = function(feature, latlng) {
-	      return L.circleMarker(latlng, {
-	        radius: 50
-	      });
-	    };
-	    this.layer = this.map.addPointToLayer(circlePoint);
-	    geoJson = [
-	      {
-	        "type": "Feature",
-	        properties: {},
-	        geometry: {
-	          "type": "Point",
-	          coordinates: [this.currentLatLng.lng, this.currentLatLng.lat, 6]
-	        }
-	      }
-	    ];
-	    return this.layer.addData(geoJson);
+	  Stage.prototype.addMap = function(divId, mapId) {
+	    this.map = MapManager.create(divId, mapId, this.currentLatLng);
+	    return MapManager.setView(this.currentLatLng);
+	  };
+
+	  Stage.prototype.setMap = function(map) {
+	    this.map = map;
+	  };
+
+	  Stage.prototype.getMarker = function() {
+	    return this.marker;
+	  };
+
+	  Stage.prototype.addMarker = function() {
+	    this.marker = MarkerManager.createMarker(this.currentLatLng);
+	    MapManager.addMarker();
+	    return MarkerManager.setEvent(this.currentLatLng);
+	  };
+
+	  Stage.prototype.getLayer = function() {
+	    return this.layer;
+	  };
+
+	  Stage.prototype.addLayer = function() {
+	    return this.layer = LayerManager.createLayer();
+	  };
+
+	  Stage.prototype.addCircleMarker = function(num) {
+	    return LayerManager.addCircleMarker(num);
 	  };
 
 	  Stage.prototype.removeCircleMarker = function() {
-	    return this.layer.clearLayers();
+	    return LayerManager.removeCircleMarker();
 	  };
 
 	  Stage.prototype.setLatLng = function(latlng) {
-	    this.currentLatLng = latlng;
-	    this.map.moveMarker(this.marker, this.currentLatLng);
-	    if (this.circleMarker !== null) {
-	      this.map.moveMarker(this.circleMarker, this.currentLatLng);
-	    }
-	    return this.map.setView(this.currentLatLng);
+	    return this.currentLatLng = latlng;
 	  };
 
-	  Stage.prototype.getLatLng = function() {
-	    return this.currentLatLng;
+	  Stage.prototype.moveMap = function(latlng) {
+	    this.setLatLng(latlng);
+	    MarkerManager.moveMarker(latlng);
+	    if (this.checkPointNum !== 0) {
+	      LayerManager.addCircleMarker(this.checkPointNum);
+	    }
+	    return MapManager.setView(this.currentLatLng);
+	  };
+
+	  Stage.prototype.getCheckPointNum = function() {
+	    return this.checkPointNum;
+	  };
+
+	  Stage.prototype.setCheckPointNum = function(checkPointNum) {
+	    this.checkPointNum = checkPointNum;
 	  };
 
 	  Stage.prototype.getAddress = function() {
@@ -147,7 +163,7 @@
 	    changeLocation = function(json) {
 	      var latlng;
 	      latlng = LatLng.toLatLng(json.results[0].geometry.location);
-	      return window.stage.setLatLng(latlng);
+	      return window.stage.moveMap(latlng);
 	    };
 	    keyPressEvent = function(e) {
 	      var address, addressText;
@@ -161,22 +177,19 @@
 	    return this.setKeyPressEvent(keyPressEvent);
 	  };
 
-	  Stage.prototype.setCheckEvent = function(e) {
-	    return $('#checkpoint').change(e);
-	  };
-
 	  Stage.prototype.setCheckPointEvent = function() {
 	    var checkEvent;
 	    checkEvent = function() {
-	      if ($(this).is(':checked')) {
-	        if (window.stage.getCircleMarker !== null) {
-	          return window.stage.addCircleMarker();
-	        }
-	      } else {
+	      var num;
+	      num = $("[name='radius']").index(this);
+	      window.stage.setCheckPointNum(num);
+	      if (num === 0) {
 	        return window.stage.removeCircleMarker();
+	      } else {
+	        return window.stage.addCircleMarker(num);
 	      }
 	    };
-	    return this.setCheckEvent(checkEvent);
+	    return $("[name='radius']").click(checkEvent);
 	  };
 
 	  return Stage;
@@ -249,20 +262,41 @@
 /* 4 */
 /***/ function(module, exports, __webpack_require__) {
 
-	window.Marker = (function() {
-	  function Marker(latlng) {
-	    this.marker = null;
-	  }
+	window.MarkerManager = (function() {
+	  function MarkerManager() {}
 
-	  Marker.prototype.addMap = function(map) {
-	    return this.marker.addTo(map);
+	  MarkerManager.createMarker = function(latlng) {
+	    return L.marker(latlng.toMapboxLatLng(), {
+	      icon: L.mapbox.marker.icon({
+	        'marker-color': 'ff8856'
+	      }),
+	      draggable: true
+	    });
 	  };
 
-	  Marker.prototype.moveMarker = function(latlng) {
-	    return this.marker.setLatLng(latlng.toMapboxLatLng());
+	  MarkerManager.moveMarker = function(latlng) {
+	    var marker;
+	    marker = window.stage.getMarker();
+	    return marker.setLatLng(latlng.toMapboxLatLng());
 	  };
 
-	  return Marker;
+	  MarkerManager.setEvent = function(latlng) {
+	    var marker;
+	    marker = window.stage.getMarker();
+	    marker.bindPopup(latlng.toString());
+	    window.stage.setAddress(latlng);
+	    return marker.on('dragend', function(e) {
+	      var num;
+	      latlng = LatLng.toLatLng(e.target._latlng);
+	      num = window.stage.getCheckPointNum();
+	      window.stage.setAddress(latlng);
+	      window.stage.setLatLng(latlng);
+	      window.stage.addCircleMarker(num);
+	      return e.target.bindPopup(latlng.toString());
+	    });
+	  };
+
+	  return MarkerManager;
 
 	})();
 
@@ -271,107 +305,101 @@
 /* 5 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var __hasProp = {}.hasOwnProperty,
-	  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+	window.LayerManager = (function() {
+	  function LayerManager() {}
 
-	window.DraggableMarker = (function(_super) {
-	  __extends(DraggableMarker, _super);
+	  LayerManager.createLayer = function() {
+	    var circlePoint, map;
+	    map = window.stage.getMap();
+	    circlePoint = function(feature, latlng) {
+	      return L.circleMarker(latlng, {
+	        radius: feature.properties.radius
+	      });
+	    };
+	    return L.geoJson(null, {
+	      pointToLayer: circlePoint
+	    }).addTo(map);
+	  };
 
-	  function DraggableMarker(latlng) {
-	    this.marker = L.marker(latlng.toMapboxLatLng(), {
-	      icon: L.mapbox.marker.icon({
-	        'marker-color': 'ff8856'
-	      }),
-	      draggable: true
-	    });
-	    this.marker.bindPopup(latlng.toString());
-	    window.stage.setAddress(latlng);
-	    this.marker.on('dragend', function(e) {
-	      latlng = LatLng.toLatLng(e.target._latlng);
-	      window.stage.setAddress(latlng);
-	      window.stage.setLatLng(latlng);
-	      return e.target.bindPopup(latlng.toString());
-	    });
-	  }
+	  LayerManager.addCircleMarker = function(num) {
+	    var geoJson, latlng, layer, radius;
+	    this.removeCircleMarker();
+	    radius = [0, 30, 50, 100];
+	    layer = window.stage.getLayer();
+	    latlng = window.stage.getLatLng();
+	    geoJson = [
+	      {
+	        "type": "Feature",
+	        properties: {
+	          radius: radius[num]
+	        },
+	        geometry: {
+	          "type": "Point",
+	          coordinates: [latlng.lng, latlng.lat, 6]
+	        }
+	      }
+	    ];
+	    return layer.addData(geoJson);
+	  };
 
-	  return DraggableMarker;
+	  LayerManager.removeCircleMarker = function() {
+	    var layer;
+	    layer = window.stage.getLayer();
+	    if (layer !== null) {
+	      return layer.clearLayers();
+	    }
+	  };
 
-	})(Marker);
+	  return LayerManager;
+
+	})();
 
 
 /***/ },
 /* 6 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var __hasProp = {}.hasOwnProperty,
-	  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+	window.MapManager = (function() {
+	  function MapManager() {}
 
-	window.CircleMarker = (function(_super) {
-	  __extends(CircleMarker, _super);
+	  MapManager.create = function(divId, mapId, initLatlng) {
+	    var map;
+	    map = L.mapbox.map(divId, mapId);
+	    window.stage.setMap(map);
+	    this.setView(initLatlng);
+	    return map;
+	  };
 
-	  function CircleMarker(latlng) {
-	    this.marker = L.circleMarker(latlng.toMapboxLatLng(), {
-	      icon: L.mapbox.marker.icon({
-	        'marker-color': 'ff8856'
-	      })
-	    });
-	  }
+	  MapManager.addMarker = function() {
+	    var map, marker;
+	    marker = window.stage.getMarker();
+	    map = window.stage.getMap();
+	    return marker.addTo(map);
+	  };
 
-	  return CircleMarker;
+	  MapManager.setView = function(latlng) {
+	    var map;
+	    map = window.stage.getMap();
+	    return map.setView([latlng.lat, latlng.lng], 16);
+	  };
 
-	})(Marker);
+	  return MapManager;
+
+	})();
 
 
 /***/ },
 /* 7 */
 /***/ function(module, exports, __webpack_require__) {
 
-	window.Map = (function() {
-	  function Map(divId, mapId, initLatlng) {
-	    this.divId = divId;
-	    this.mapId = mapId;
-	    this.map = L.mapbox.map(this.divId, this.mapId);
-	    this.setView(initLatlng);
-	  }
-
-	  Map.prototype.addMarker = function(marker) {
-	    return marker.addMap(this.map);
-	  };
-
-	  Map.prototype.addPointToLayer = function(point) {
-	    return L.geoJson(null, {
-	      pointToLayer: point
-	    }).addTo(this.map);
-	  };
-
-	  Map.prototype.moveMarker = function(marker, latlng) {
-	    return marker.moveMarker(latlng);
-	  };
-
-	  Map.prototype.setView = function(latlng) {
-	    return this.map.setView([latlng.lat, latlng.lng], 16);
-	  };
-
-	  Map.prototype.setGeoJson = function(geoJson) {
-	    return this.map.featureLayer.setGeoJSON(geoJson);
-	  };
-
-	  return Map;
-
-	})();
-
-
-/***/ },
-/* 8 */
-/***/ function(module, exports, __webpack_require__) {
-
 	$(function() {
-	  var latlng, map;
+	  var latlng;
 	  latlng = new LatLng(35.681382, 139.766084);
 	  L.mapbox.accessToken = 'pk.eyJ1IjoiYWJhYnVwMTE5MiIsImEiOiJhb2JBNW5BIn0.IID695V8Pc8STRTeGaiMbg';
-	  map = new Map('map', 'examples.map-i86nkdio', latlng);
-	  window.stage = new Stage(map, latlng);
-	  return window.stage.addMarker(new DraggableMarker(latlng));
+	  window.stage = new Stage(latlng);
+	  window.stage.addMap('map', 'examples.map-i86nkdio');
+	  window.stage.addMarker();
+	  return window.stage.addLayer();
 	});
 
 

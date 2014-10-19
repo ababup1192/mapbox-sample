@@ -1,58 +1,76 @@
 window.Stage = (function() {
-  function Stage(map, initLatLng) {
-    this.map = map;
+  function Stage(initLatLng) {
+    this.map = null;
     this.marker = null;
-    this.circleMarker = null;
     this.currentLatLng = initLatLng;
+    this.layer = null;
+    this.checkPointNum = 0;
     this.setGettingAddressEvent();
     this.setCheckPointEvent();
   }
 
-  Stage.prototype.getCircleMarker = function() {
-    return this.circleMarker;
+  Stage.prototype.getLatLng = function() {
+    return this.currentLatLng;
   };
 
-  Stage.prototype.addMarker = function(marker) {
-    this.marker = marker;
-    return this.map.addMarker(marker);
+  Stage.prototype.getMap = function() {
+    return this.map;
   };
 
-  Stage.prototype.addCircleMarker = function() {
-    var circlePoint, geoJson;
-    circlePoint = function(feature, latlng) {
-      return L.circleMarker(latlng, {
-        radius: 50
-      });
-    };
-    this.layer = this.map.addPointToLayer(circlePoint);
-    geoJson = [
-      {
-        "type": "Feature",
-        properties: {},
-        geometry: {
-          "type": "Point",
-          coordinates: [this.currentLatLng.lng, this.currentLatLng.lat, 6]
-        }
-      }
-    ];
-    return this.layer.addData(geoJson);
+  Stage.prototype.addMap = function(divId, mapId) {
+    this.map = MapManager.create(divId, mapId, this.currentLatLng);
+    return MapManager.setView(this.currentLatLng);
+  };
+
+  Stage.prototype.setMap = function(map) {
+    this.map = map;
+  };
+
+  Stage.prototype.getMarker = function() {
+    return this.marker;
+  };
+
+  Stage.prototype.addMarker = function() {
+    this.marker = MarkerManager.createMarker(this.currentLatLng);
+    MapManager.addMarker();
+    return MarkerManager.setEvent(this.currentLatLng);
+  };
+
+  Stage.prototype.getLayer = function() {
+    return this.layer;
+  };
+
+  Stage.prototype.addLayer = function() {
+    return this.layer = LayerManager.createLayer();
+  };
+
+  Stage.prototype.addCircleMarker = function(num) {
+    return LayerManager.addCircleMarker(num);
   };
 
   Stage.prototype.removeCircleMarker = function() {
-    return this.layer.clearLayers();
+    return LayerManager.removeCircleMarker();
   };
 
   Stage.prototype.setLatLng = function(latlng) {
-    this.currentLatLng = latlng;
-    this.map.moveMarker(this.marker, this.currentLatLng);
-    if (this.circleMarker !== null) {
-      this.map.moveMarker(this.circleMarker, this.currentLatLng);
-    }
-    return this.map.setView(this.currentLatLng);
+    return this.currentLatLng = latlng;
   };
 
-  Stage.prototype.getLatLng = function() {
-    return this.currentLatLng;
+  Stage.prototype.moveMap = function(latlng) {
+    this.setLatLng(latlng);
+    MarkerManager.moveMarker(latlng);
+    if (this.checkPointNum !== 0) {
+      LayerManager.addCircleMarker(this.checkPointNum);
+    }
+    return MapManager.setView(this.currentLatLng);
+  };
+
+  Stage.prototype.getCheckPointNum = function() {
+    return this.checkPointNum;
+  };
+
+  Stage.prototype.setCheckPointNum = function(checkPointNum) {
+    this.checkPointNum = checkPointNum;
   };
 
   Stage.prototype.getAddress = function() {
@@ -80,7 +98,7 @@ window.Stage = (function() {
     changeLocation = function(json) {
       var latlng;
       latlng = LatLng.toLatLng(json.results[0].geometry.location);
-      return window.stage.setLatLng(latlng);
+      return window.stage.moveMap(latlng);
     };
     keyPressEvent = function(e) {
       var address, addressText;
@@ -94,22 +112,19 @@ window.Stage = (function() {
     return this.setKeyPressEvent(keyPressEvent);
   };
 
-  Stage.prototype.setCheckEvent = function(e) {
-    return $('#checkpoint').change(e);
-  };
-
   Stage.prototype.setCheckPointEvent = function() {
     var checkEvent;
     checkEvent = function() {
-      if ($(this).is(':checked')) {
-        if (window.stage.getCircleMarker !== null) {
-          return window.stage.addCircleMarker();
-        }
-      } else {
+      var num;
+      num = $("[name='radius']").index(this);
+      window.stage.setCheckPointNum(num);
+      if (num === 0) {
         return window.stage.removeCircleMarker();
+      } else {
+        return window.stage.addCircleMarker(num);
       }
     };
-    return this.setCheckEvent(checkEvent);
+    return $("[name='radius']").click(checkEvent);
   };
 
   return Stage;

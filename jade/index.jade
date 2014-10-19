@@ -15,7 +15,17 @@ html(lang="ja")
 			#mapStatus
 				input#address(type="text")
 				p チェックポイント
-				input#checkpoint(type="checkbox")
+				- var radiusList = ["なし", "30", "50", "100"]
+				- for(var i =0; i < radiusList.length; i++){
+					- if(i==0){
+						input#check-no(type="radio" name="radius" checked="checked")
+					- }
+					- else{
+						input(id="check-#{radiusList[i]}" type="radio" name="radius")
+					- }
+					label #{radiusList[i]}
+				- }
+
 			#inner
 				#mainWrap
 					#map

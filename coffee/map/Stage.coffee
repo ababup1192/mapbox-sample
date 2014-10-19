@@ -1,47 +1,56 @@
 class window.Stage
-	constructor: (@map, initLatLng) ->
+	constructor: (initLatLng) ->
+		@map = null
 		@marker = null
-		@circleMarker = null
 		@currentLatLng = initLatLng
+		@layer = null
+		# 設定から読み込み
+		@checkPointNum = 0
+
 		@setGettingAddressEvent()
 		@setCheckPointEvent()
 
-	getCircleMarker: () ->
-		@circleMarker
+	getLatLng: -> @currentLatLng
 
-	addMarker: (marker) ->
-		@marker = marker
-		@map.addMarker(marker)
+	getMap:() -> @map
 
-	addCircleMarker: () ->
-		circlePoint = (feature, latlng) ->
-			L.circleMarker latlng,
-				radius: 50
+	addMap: (divId, mapId)  ->
+		@map = MapManager.create(divId, mapId, @currentLatLng)
+		MapManager.setView(@currentLatLng)
 
-		@layer = @map.addPointToLayer(circlePoint)
+	setMap: (@map) ->
 
-		geoJson = [
-			"type": "Feature"
-			properties: {}
-			geometry:
-				"type":"Point"
-				coordinates:[@currentLatLng.lng, @currentLatLng.lat, 6]
-		]
+	getMarker: -> @marker
 
-		@layer.addData(geoJson)
+	addMarker: () ->
+		@marker = MarkerManager.createMarker(@currentLatLng)
+		MapManager.addMarker()
+		MarkerManager.setEvent(@currentLatLng)
+
+	getLayer: () -> @layer
+
+	addLayer: () ->
+		@layer = LayerManager.createLayer()
+
+	addCircleMarker: (num) ->
+		LayerManager.addCircleMarker(num)
 
 	removeCircleMarker: () ->
-		@layer.clearLayers()
+		LayerManager.removeCircleMarker()
 
 	setLatLng: (latlng) ->
 		@currentLatLng = latlng
-		@map.moveMarker(@marker, @currentLatLng)
-		if @circleMarker isnt null
-			@map.moveMarker(@circleMarker, @currentLatLng)
-		@map.setView(@currentLatLng)
 
-	getLatLng: () ->
-		@currentLatLng
+	moveMap: (latlng) ->
+		@setLatLng(latlng)
+		MarkerManager.moveMarker(latlng)
+		if @checkPointNum isnt 0
+			LayerManager.addCircleMarker(@checkPointNum)
+		MapManager.setView(@currentLatLng)
+
+	getCheckPointNum: -> @checkPointNum
+
+	setCheckPointNum: (@checkPointNum) ->
 
 	getAddress: () ->
 		$('#address').val()
@@ -61,9 +70,9 @@ class window.Stage
 	setGettingAddressEvent: () ->
 		changeLocation = (json) ->
 				latlng = LatLng.toLatLng(json.results[0].geometry.location)
-				window.stage.setLatLng(latlng)
+				window.stage.moveMap(latlng)
 		keyPressEvent = (e) ->
-				if e.keyCode == 13
+				if e.keyCode is 13
 					addressText = window.stage.getAddress()
 					address = new Address(addressText)
 					$.when address.toLatLng$()
@@ -71,17 +80,15 @@ class window.Stage
 					false
 		@setKeyPressEvent keyPressEvent
 
-	setCheckEvent: (e) ->
-		$('#checkpoint').change e
-
 	setCheckPointEvent: () ->
 		checkEvent = () ->
-				if $(this).is ':checked'
-					if window.stage.getCircleMarker isnt null
-						window.stage.addCircleMarker()
-				else
+				num = $("[name='radius']").index(@)
+				window.stage.setCheckPointNum(num)
+				if num is 0
 					window.stage.removeCircleMarker()
+				else
+					window.stage.addCircleMarker(num)
 
-		@setCheckEvent checkEvent
+		$("[name='radius']").click checkEvent
 
 
